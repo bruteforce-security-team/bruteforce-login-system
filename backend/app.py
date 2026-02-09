@@ -1,37 +1,30 @@
-from flask import Flask, request, redirect, url_for, render_template_string
-
-app = Flask(__name__)
-
-# Temporary users (for testing)
-USERS = {
-    "admin": "admin123",
-    "user": "password123"
-}
-
-@app.route("/", methods=["GET"])
-def home():
-    # just redirect to frontend
-    return redirect("http://127.0.0.1:5500/login.html")
-
-
-@app.route("/login", methods=["POST"])
-def login():
-    username = request.form.get("username")
-    password = request.form.get("password")
-
-    # basic validation
-    if not username or not password:
-        return render_template_string("<h2>Missing fields</h2>")
-
-    # check credentials
-    if username in USERS and USERS[username] == password:
-        return render_template_string(f"""
-            <h2>Login Successful</h2>
-            <p>Welcome, {username}</p>
-        """)
-    else:
-        return render_template_string("<h2>Invalid username or password</h2>")
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication</title>
+    
+</head>
+<link rel="stylesheet" href="styles.css">
+<body>
+    <div>
+        <h2>Login</h2>
+        <form action="http://127.0.0.1:5000/login" method="POST">
+            <button type="button" onclick="window.location.href='/register'">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" style="width:20px; height:20px; vertical-align:middle; margin-left:5px;">
+            Continue with Google
+            </button>
+            <br><br>
+            <p>OR</p>
+            <label for="username">Username:</label>
+            <input type="text" placeholder="Enter Username" id="username" name="username" required>
+            <br><br>
+            <label for="password">Password:</label>
+            <input type="password" placeholder="Enter Password" id="password" name="password" required>
+            <br><br>
+           <button type="submit">Login</button>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
