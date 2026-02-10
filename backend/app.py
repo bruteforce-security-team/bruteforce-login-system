@@ -1,9 +1,12 @@
 from flask import Flask, request, render_template_string
 import sqlite3
 import bcrypt
+import os
+
 
 app = Flask(__name__)
-DB_NAME = "../database/security_project.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_NAME = os.path.join(BASE_DIR, "..", "database", "security_project.db")
 print("DATABASE PATH:", DB_NAME)
 
 
@@ -38,6 +41,7 @@ def add_user(username, password):
     hashed = bcrypt.hashpw(password.encode(), bcrypt.gensalt())
 
     try:
+        
         cursor.execute(
             "INSERT INTO users (username, password) VALUES (?, ?)",
             (username, hashed)
@@ -55,6 +59,8 @@ def login():
     username = request.form.get("username")
     password = request.form.get("password")
     ip_address = request.remote_addr
+    user_agent = request.headers.get("User-Agent")
+
 
     conn = get_db()
     cursor = conn.cursor()
@@ -70,9 +76,11 @@ def login():
 
     # 🔥 INSERT INTO login_logs (THIS WAS MISSING)
     cursor.execute(
-        "INSERT INTO login_logs (username, success, ip_address) VALUES (?, ?, ?)",
-        (username, success, ip_address)
-    )
+    "INSERT INTO login_logs (username, success, ip_address, user_agent) VALUES (?, ?, ?, ?)",
+    (username, success, ip_address, user_agent)
+)
+
+   
 
     conn.commit()
     conn.close()
