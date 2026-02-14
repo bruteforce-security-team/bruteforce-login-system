@@ -95,9 +95,49 @@ def login():
 
     if user and bcrypt.checkpw(password.encode(), user[0]):
         success = 1
-       
+        # 🔹 Get IP
+    
     current_time = datetime.now()
     ip_address = request.remote_addr
+
+    # =============================
+    # FEATURE 3 STARTS HERE
+    # =============================
+
+    cursor.execute("""
+        SELECT username
+        FROM login_logs
+        WHERE ip_address = ?
+        ORDER BY timestamp DESC
+        LIMIT 5
+    """, (ip_address,))
+
+    rows = cursor.fetchall()
+
+    usernames = [row[0] for row in rows]
+
+    # include current username
+    usernames.append(username)
+
+    unique_usernames = len(set(usernames))
+
+    print("Unique Usernames (Last 5):", unique_usernames)
+
+    if unique_usernames >= 3:
+        print("🚨 USERNAME ENUMERATION DETECTED")
+
+    # =============================
+    # FEATURE 3 ENDS HERE
+    # =============================
+        current_time = datetime.now()
+    user_agent = request.headers.get("User-Agent")
+
+    cursor.execute("""
+        INSERT INTO login_logs (username, timestamp, success, ip_address, user_agent)
+        VALUES (?, ?, ?, ?, ?)
+    """, (username, current_time.isoformat(), success, ip_address, user_agent))
+
+    
     from datetime import timedelta
 
     # 🔹 Define time window (2 minutes)
