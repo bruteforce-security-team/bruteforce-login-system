@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
-
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, session, redirect, url_for
 import sqlite3
 import bcrypt
 import os
@@ -11,6 +10,7 @@ app = Flask(
     template_folder="../frontend",
     static_folder="../frontend"
 )
+app.secret_key = "supersecretkey"
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_NAME = os.path.join(BASE_DIR, "..", "database", "security_project.db")
@@ -121,6 +121,14 @@ def get_risk_level(score):
         return "Suspicious"
     else:
         return "Attack"
+    
+    
+# =====================================================
+# LOGIN PAGE ROUTE
+# =====================================================    
+@app.route("/")
+def login_page():
+    return render_template("index.html")
 
 # =====================================================
 # LOGIN ROUTE
@@ -190,15 +198,23 @@ def login():
     conn.close()
 
     if success:
-        
-        return f"<h2>Login Successful</h2><p>Welcome, {username}</p>"
+        session["username"] = username
+
+        if username == "admin":
+            return redirect(url_for("admin_dashboard"))
+        else:
+            return f"<h2>Login Successful</h2><p>Welcome, {username}</p>"
+
     return "<h2>Invalid username or password</h2>"
+    
 
 # =====================================================
 # DASHBOARD
 # =====================================================
 @app.route("/admin/security_dashboard")
 def admin_dashboard():
+    if "username" not in session or session["username"] != "admin":
+        return redirect(url_for("login_page"))
     conn = get_db()
     cursor = conn.cursor()
 
@@ -259,6 +275,7 @@ def admin_dashboard():
     risk_values=risk_values
 )
     
+    
 # =====================================================
 # APP START
 # =====================================================
@@ -270,3 +287,5 @@ if __name__ == "__main__":
     add_user("admin", "admin123")
     add_user("user", "password123")
     app.run(debug=True)
+    
+    
