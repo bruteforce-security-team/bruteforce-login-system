@@ -1,59 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Behavioral Intrusion Detection System</title>
-
-    <!-- Correct placement inside head -->
+    <title>Authentication</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <div class="login-container">
-        <h2>Secure Login Portal</h2>
-        <p class="subtitle">Behavioral Intrusion Detection Enabled</p>
-
-        <!-- Error message area -->
-        <p id="error-message" class="error-message"></p>
-
-
-        
-            <form action="/login" method="POST">
-
-            <!-- Google Button -->
-            <button type="button" class="google-btn" onclick="window.location.href='/register'">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
-                    alt="Google Logo">
-                Continue with Google
+    <div>
+        <h2>Login</h2>
+        <form action="http://127.0.0.1:5000/login" method="POST">
+            <button type="button" onclick="window.location.href='/register'">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google Logo" style="width:20px; height:20px; vertical-align:middle; margin-left:5px;">
+            Continue with Google
             </button>
-
-            <p class="divider">OR</p>
-
-            <!-- Username -->
-            <label for="username">Username</label>
+            <br><br>
+            <p>OR</p>
+            <label for="username">Username:</label>
             <input type="text" placeholder="Enter Username" id="username" name="username" required>
-
-            <!-- Password -->
-            <label for="password">Password</label>
+            <br><br>
+            <label for="password">Password:</label>
             <input type="password" placeholder="Enter Password" id="password" name="password" required>
-
-            <!-- Show Password -->
-            <div class="show-password">
-                <input type="checkbox" id="togglePassword">
-                <label for="togglePassword">Show Password</label>
-            </div>
-
-            <!-- Submit -->
-
-            <button type="submit" id="loginBtn">
-                <span id="btn-text"> Login</span>
-            </button>
+            <br><br>
+           <button type="submit">Login</button>
         </form>
     </div>
-
-    <script src="script.js"></script>
+    <script src="script.js">
+    </script>
 </body>
-
 </html>
