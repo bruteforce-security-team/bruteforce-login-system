@@ -16,6 +16,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_NAME = os.path.join(BASE_DIR, "..", "database", "security_project.db")
 print("DATABASE PATH:", DB_NAME)
 
+
+
 # =====================================================
 # DATABASE HELPERS
 # =====================================================
@@ -65,6 +67,24 @@ def create_blocked_ips_table():
     """)
     conn.commit()
     conn.close()
+    ##to  create alert table
+def create_alerts_table():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS alerts (
+            alert_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ip_address TEXT,
+            username TEXT,
+            risk_score INTEGER,
+            message TEXT,
+            timestamp TEXT
+        )
+    """)
+
+    conn.commit()
+    conn.close()
 
 def add_user(username, password):
     conn = get_db()
@@ -93,7 +113,7 @@ def is_ip_blocked(ip):
             return True
     return False
 
-def block_ip(ip, minutes=10):
+def block_ip(ip, minutes=0.1):
     conn = get_db()
     cursor = conn.cursor()
     blocked_until = datetime.now() + timedelta(minutes=minutes)
@@ -186,6 +206,29 @@ def login():
 
     if risk_level == "Attack":
         block_ip(ip_address)
+
+        # Create alert in database
+        conn_alert = get_db()
+        cursor_alert = conn_alert.cursor()
+
+        alert_message = "Brute force attack detected. IP blocked."
+
+        cursor_alert.execute("""
+            INSERT INTO alerts (ip_address, username, risk_score, message, timestamp)
+            VALUES (?, ?, ?, ?, ?)
+        """, (
+        ip_address,
+        username,
+        risk_score,
+        alert_message,
+        datetime.now().isoformat()
+        ))
+
+        conn_alert.commit()
+        conn_alert.close()
+
+        print(f"🚨 ALERT: {ip_address} blocked due to attack behavior!")
+
         conn.close()
         return "<h2>🚨 Suspicious activity detected. IP blocked.</h2>"
 
@@ -196,6 +239,7 @@ def login():
 
     conn.commit()
     conn.close()
+    
 
     if success:
         session["username"] = username
@@ -260,6 +304,13 @@ def admin_dashboard():
         LIMIT 10
     """)
     logs = cursor.fetchall()
+    cursor.execute("""
+        SELECT ip_address, username, risk_score, message, timestamp
+        FROM alerts
+        ORDER BY timestamp DESC
+        LIMIT 5
+    """)
+    alerts = cursor.fetchall()        
     
 
     conn.close()
@@ -272,8 +323,12 @@ def admin_dashboard():
     suspicious_ip_count=suspicious_ip_count,
     logs=logs,
     risk_labels=risk_labels,
-    risk_values=risk_values
-)
+    risk_values=risk_values,
+    alerts=alerts
+    )
+    
+    
+
     
     
 # =====================================================
@@ -284,6 +339,7 @@ if __name__ == "__main__":
     create_users_table()
     create_login_logs_table()
     create_blocked_ips_table()
+    create_alerts_table()
     add_user("admin", "admin123")
     add_user("user", "password123")
     app.run(debug=True)
