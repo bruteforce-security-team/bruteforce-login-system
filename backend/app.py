@@ -1,3 +1,5 @@
+import smtplib
+from email.mime.text import MIMEText
 from datetime import datetime, timedelta
 from flask import Flask, request, render_template, session, redirect, url_for
 import sqlite3
@@ -137,10 +139,54 @@ def calculate_risk_score(time_gap, continuous_attempts, unique_usernames, fail_c
 def get_risk_level(score):
     if score <= 30:
         return "Normal"
-    elif score <= 60:
+    elif score <= 50:
         return "Suspicious"
     else:
         return "Attack"
+    
+
+
+def send_attack_email(ip_address, username, risk_score):
+    sender_email = os.environ.get("EMAIL_USER")
+    app_password = os.environ.get("EMAIL_PASS")
+    
+    print("DEBUG USER:", sender_email)
+    print("DEBUG PASS:", app_password)
+    
+    receiver_email = sender_email
+
+    subject = "🚨 Brute Force Attack Detected"
+
+    body = f"""
+    ALERT!
+
+    Suspicious login behavior detected.
+
+    IP Address: {ip_address}
+    Username: {username}
+    Risk Score: {risk_score}
+    Time: {datetime.now().isoformat()}
+
+    The IP has been blocked automatically.
+    """
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = sender_email
+    msg["To"] = receiver_email
+
+    try:
+        server = smtplib.SMTP("smtp.gmail.com", 587)
+        server.starttls()
+        server.login(sender_email, app_password)
+        server.sendmail(sender_email, receiver_email, msg.as_string())
+        server.quit()
+
+        print("📧 Attack alert email sent successfully.")
+       
+
+    except Exception as e:
+        print("Email sending failed:", e)
     
     
 # =====================================================
@@ -223,11 +269,14 @@ def login():
         alert_message,
         datetime.now().isoformat()
         ))
+       
 
         conn_alert.commit()
         conn_alert.close()
 
         print(f"🚨 ALERT: {ip_address} blocked due to attack behavior!")
+        
+        send_attack_email(ip_address, username, risk_score)
 
         conn.close()
         return "<h2>🚨 Suspicious activity detected. IP blocked.</h2>"
@@ -310,7 +359,12 @@ def admin_dashboard():
         ORDER BY timestamp DESC
         LIMIT 5
     """)
-    alerts = cursor.fetchall()        
+    alerts = cursor.fetchall()    
+    cursor.execute("""
+        SELECT ip_address, blocked_until
+        FROM blocked_ips
+    """)
+    blocked_ips = cursor.fetchall()    
     
 
     conn.close()
@@ -324,8 +378,21 @@ def admin_dashboard():
     logs=logs,
     risk_labels=risk_labels,
     risk_values=risk_values,
-    alerts=alerts
+    alerts=alerts,
+    blocked_ips=blocked_ips,
     )
+@app.route("/admin/unblock/<ip>")
+def unblock_ip(ip):
+    if "username" not in session or session["username"] != "admin":
+        return redirect(url_for("login_page"))
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM blocked_ips WHERE ip_address = ?", (ip,))
+    conn.commit()
+    conn.close()
+
+    return redirect(url_for("admin_dashboard"))
     
     
 

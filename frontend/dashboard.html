@@ -150,6 +150,27 @@ new Chart(ctx, {
     }
 });
 </script>
+<h3>Blocked IP Addresses</h3>
+
+<table>
+<tr>
+    <th>IP Address</th>
+    <th>Blocked Until</th>
+    <th>Action</th>
+</tr>
+
+{% for ip in blocked_ips %}
+<tr>
+    <td>{{ ip[0] }}</td>
+    <td>{{ ip[1] }}</td>
+    <td>
+        <a href="/admin/unblock/{{ ip[0] }}">
+            <button style="background:red; color:white;">Unblock</button>
+        </a>
+    </td>
+</tr>
+{% endfor %}
+</table>
 
 </body>
 </html>
