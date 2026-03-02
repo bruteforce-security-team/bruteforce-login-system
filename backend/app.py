@@ -115,7 +115,7 @@ def is_ip_blocked(ip):
             return True
     return False
 
-def block_ip(ip, minutes=0.1):
+def block_ip(ip, minutes=10):
     conn = get_db()
     cursor = conn.cursor()
     blocked_until = datetime.now() + timedelta(minutes=minutes)
@@ -294,7 +294,7 @@ def login():
         session["username"] = username
 
         if username == "admin":
-            return redirect(url_for("admin_dashboard"))
+            return redirect(request.host_url + "admin/security_dashboard")
         else:
             return f"<h2>Login Successful</h2><p>Welcome, {username}</p>"
 
